@@ -1,0 +1,5 @@
+CatsApi/appsettings.json
+bin/
+obj/
+Migrations/
+.vs/
