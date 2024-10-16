@@ -13,7 +13,7 @@ namespace CatsApi.DataAccess.Entities
 
         public List<CatEntity> Cats { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime Created { get; set; }
 
     }
 }

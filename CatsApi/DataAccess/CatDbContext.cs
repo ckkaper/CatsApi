@@ -7,10 +7,13 @@ namespace CatsApi.DataAccess
     {
         public virtual DbSet<CatEntity> Cat { get; set; }
 
+        public virtual DbSet<TagEntity> Tag { get; set; }
+
         public CatsDbContext(DbContextOptions<CatsDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
 
             modelBuilder.Entity<CatEntity>()
                 .HasMany(e => e.Tags)

@@ -1,73 +1,76 @@
-using System.Text.Json;
 using CatsApi.DataAccess;
-using CatsApi.DataAccess.Entities;
+using CatsApi.Models;
 using CatsApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CatsApi.Controllers
 {
     [ApiController]
-    [Route("/cats")]
+    [Route("/api")]
     public class CatsController : ControllerBase
     {
 
 
         private readonly ILogger<CatsController> _logger;
-        private CatsStealer _catsStealer;
-        private CatsDbContext _catsContext;
+        private CatsStealerService _catsStealer;
+        private CatsDbContext _catsDbContext;
+        private CatsRepository _catsRepository;
 
-        public CatsController(ILogger<CatsController> logger, CatsDbContext catsContext)
+        public CatsController(ILogger<CatsController> logger, CatsDbContext catsContext, CatsRepository catsRepository)
         {
             _logger = logger;
-            _catsStealer = new CatsStealer();
-            _catsContext = catsContext;
+            _catsStealer = new CatsStealerService();
+            _catsDbContext = catsContext;
+            _catsRepository = catsRepository;
         }
 
-        [HttpGet(Name = "playing arround")]
-        public async Task<CatItem[]> Get()
+        [HttpGet("/cats/fetch")]
+        public async Task<IActionResult> Get()
         {
-
-            var res = await _catsStealer.GetCats();
-
-            CatItem[]? catsResponse = JsonSerializer.Deserialize<CatItem[]>(await res.Content.ReadAsStringAsync());
-            Array.ForEach<CatItem>(catsResponse, c =>
+            try
             {
-                List<string> tagList = c.breeds[0].temperament.Split(',').ToList();
-                tagList.Add(c.breeds[0].name);
+                var res = await _catsRepository.SeedCats(25);
+                return Ok(true);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
 
-                var tagEntities = new List<TagEntity>();
-                for (var i = 0; i < tagList.Count; i++)
-                {
-                    var entity = new TagEntity()
-                    {
-                        Name = tagList[i],
-                        CreatedAt = DateTime.Now,
-                    };
+            }
+        }
 
-                    tagEntities.Add(entity);
-                }
+        [HttpGet("/cats/{id}")]
+        public async Task<IActionResult> GetCatById(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest();
+            }
 
-                if (_catsContext.Cat.Where(c => c.CatId == c.CatId).Any())
-                {
-                    return;
-                }
+            try
+            {
+                var res = await _catsRepository.GetCatById(id);
+                return Ok(res.ToApiResponse());
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
 
-                var cat = new CatEntity
-                {
-                    CatId = c.id,
-                    Width = c.width,
-                    Height = c.height,
-                    Image = "ok",
-                    CreatedAt = DateTime.Now,
-                    Tags = tagEntities
-                };
+        [HttpGet("/cats")]
+        public async Task<IActionResult> GetCats([FromQuery] int page = 25, [FromQuery] int pageSize = 1, [FromQuery] string tag = "")
+        {
+            try
+            {
+                var res = await _catsRepository.GetCats(page, pageSize, tag);
+                return Ok(res.ToApiResponse());
 
-                _catsContext.Cat.Add(cat);
-                _catsContext.SaveChanges();
-            });
-
-            return catsResponse;
-
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

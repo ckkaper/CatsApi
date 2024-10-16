@@ -1,5 +1,7 @@
 CatsApi/appsettings.json
+CatsApi/obj/
 bin/
-obj/
+obj/*
 Migrations/
+LocalImageRepository
 .vs/

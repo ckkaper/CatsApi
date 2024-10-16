@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CatsApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0d725c9fe5466aad5622a5227494a7889a5188dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("CatsApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CatsApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

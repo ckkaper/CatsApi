@@ -4,19 +4,20 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 5190
 
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["CatsApi/CatsApi.csproj", "CatsApi/"]
+WORKDIR /CatsApi
+
+COPY ["CatsApi.csproj", "CatsApi/"]
+
 RUN dotnet restore "./CatsApi/CatsApi.csproj"
 COPY . .
-WORKDIR "/src/CatsApi"
-RUN dotnet build "./CatsApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/CatsApi"
+# RUN dotnet build "./CatsApi/CatsApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
