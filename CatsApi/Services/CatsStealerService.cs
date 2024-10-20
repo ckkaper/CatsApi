@@ -11,7 +11,6 @@
             client.DefaultRequestHeaders.Add("x-api-key", "live_apncpQ7YqcTvTzl2FOGG1j56BcYwFxSYA0rPef1HsAL2RtUefNg9OxqCByIoUqYR");
         }
 
-
         public async Task<HttpResponseMessage> GetCats(int limit)
         {
             try

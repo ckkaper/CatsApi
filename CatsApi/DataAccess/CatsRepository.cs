@@ -2,6 +2,7 @@
 using CatsApi.Controllers;
 using CatsApi.DataAccess.Entities;
 using CatsApi.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace CatsApi.DataAccess
 {
@@ -26,97 +27,52 @@ namespace CatsApi.DataAccess
                 return new List<CatEntity>();
             }
 
-            var res = _catsDbContext.Cat.Where(c => c.CatId == id).FirstOrDefault();
+            var cat = _catsDbContext.Cat.AsNoTracking().Where(c => c.CatId == id).FirstOrDefault();
 
-            if (res != null)
+            if (cat != null)
             {
-                var imageData = await LoadImage(res.Image);
-                res.Image = imageData;
-                return new List<CatEntity>() { res };
+                return await LoadLocalImageData(new List<CatEntity>() { cat });
             }
 
             return new List<CatEntity>();
         }
 
-        private async Task<string> LoadImage(string imageUrl)
+        public async Task<List<CatEntity>> GetCats(int page, int pageSize)
         {
-            byte[] byt = [];
-            try
-            {
-                byt = await System.IO.File.ReadAllBytesAsync(imageUrl);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-
-            }
-            return Convert.ToBase64String(byt);
-        }
-
-        public async Task<List<CatEntity>> GetCats(int page = 1, int pageSize = 10)
-        {
-            var res = _catsDbContext.Cat
+            var dbResponse = _catsDbContext.Cat
+                .AsNoTracking()
                 .OrderBy(c => c.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            if (res != null)
-            {
-                for (var i = 0; i < res.Count; i++)
-                {
-                    var imageData = await LoadImage(res[i].Image);
-                    res[i].Image = imageData;
-                }
-
-                return res;
-            }
-
-            return new List<CatEntity>();
+            return await LoadLocalImageData(dbResponse);
         }
 
-
-        public async Task<List<CatEntity>> GetCats(int page = 2, int pageSize = 10, string tag = "")
+        public async Task<List<CatEntity>> GetCats(int currentPage = 2, int pageSize = 10, string tag = "")
         {
             List<CatEntity> response = new List<CatEntity>();
             if (tag != "")
             {
-                var tagOfInterest = _catsDbContext.Cat.Where(p => p.Tags.Any(t => t.Name == tag))
+                var tagOfInterestCats = _catsDbContext.Cat
+                    .AsNoTracking()
+                    .Where(p => p.Tags.Any(t => t.Name == tag.ToLower()))
                     .OrderBy(c => c.Id)
-                    .Skip((page - 1) * pageSize)
+                    .Skip((currentPage - 1) * pageSize)
                     .Take(pageSize)
                     .ToList();
 
-                if (tagOfInterest != null)
-                {
-                    for (var i = 0; i < tagOfInterest.Count; i++)
-                    {
-                        var imageData = await LoadImage(tagOfInterest[i].Image);
-                        tagOfInterest[i].Image = imageData;
-                    }
-                    return tagOfInterest;
-                }
-
-                return new List<CatEntity>();
+                return await LoadLocalImageData(tagOfInterestCats);
             }
 
-            var res = _catsDbContext.Cat
+            var allCats = _catsDbContext.Cat
+                .AsNoTracking()
                 .OrderBy(c => c.Id)
-                .Skip((page - 1) * pageSize)
+                .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            if (res != null)
-            {
-                for (var i = 0; i < res.Count; i++)
-                {
-                    var imageData = await LoadImage(res[i].Image);
-                    res[i].Image = imageData;
-                }
-                return res;
-            }
-
-            return new List<CatEntity>();
+            return await LoadLocalImageData(allCats);
         }
 
         public async Task<bool> SeedCats(int limit = 25)
@@ -170,7 +126,7 @@ namespace CatsApi.DataAccess
         private bool ImageIsTooBigForTheSameTable(CatItem image)
         {
             const int bytePerPixel = 3;
-            const int acceptableKBsToStoreInDb = 500000;
+            const int acceptableKBsToStoreInDb = 50000000;
 
             var totalPixels = image.width * image.height;
             var totalBytesForJpegFormat = totalPixels * bytePerPixel;
@@ -238,7 +194,7 @@ namespace CatsApi.DataAccess
                     {
                         var newTag = new TagEntity
                         {
-                            Name = tagName,
+                            Name = tagName.ToLower(),
                             Created = DateTime.Now
                         };
                         tags.Add(newTag);
@@ -273,6 +229,34 @@ namespace CatsApi.DataAccess
 
                 _catsDbContext.SaveChanges();
             }
+        }
+
+        private async Task<string> LoadImage(string imageUrl)
+        {
+            byte[] byt = [];
+            try
+            {
+                byt = await System.IO.File.ReadAllBytesAsync(imageUrl);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+
+            }
+            return Convert.ToBase64String(byt);
+        }
+        private async Task<List<CatEntity>> LoadLocalImageData(List<CatEntity> list)
+        {
+            if (list != null)
+            {
+                for (var i = 0; i < list.Count; i++)
+                {
+                    var imageData = await LoadImage(list[i].Image);
+                    list[i].Image = imageData;
+                }
+                return list;
+            }
+            return new List<CatEntity>();
         }
 
         private async Task SeedDatabase(CatItem[] stolenCats)

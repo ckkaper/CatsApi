@@ -4,7 +4,6 @@ namespace CatsApi.Models
 {
     public static class ModelExtensions
     {
-
         public static CatListResponseModel ToApiResponse(this List<CatEntity> list)
         {
             List<CatResponseModel> catEntities = new List<CatResponseModel>();
